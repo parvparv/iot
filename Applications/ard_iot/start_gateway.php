@@ -11,9 +11,9 @@
  * @link http://www.workerman.net/
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
 *
-*57698 对外服务 
-*97 register
-*99 内部通讯
+*57697 对外服务 
+*98 register  内部
+*99 内部通讯   内部
  */
 use \Workerman\Worker;
 use \Workerman\WebServer;
@@ -22,7 +22,7 @@ use \GatewayWorker\BusinessWorker;
 use \Workerman\Autoloader;
 
 // gateway 进程，这里使用Text协议，可以用telnet测试
-$gateway = new Gateway("text://0.0.0.0:57698");
+$gateway = new Gateway("text://0.0.0.0:57697");
 // gateway名称，status方便查看
 $gateway->name = 'ard_iot1';
 // gateway进程数
@@ -33,7 +33,7 @@ $gateway->lanIp = '127.0.0.1';
 // 则一般会使用4000 4001 4002 4003 4个端口作为内部通讯端口 
 $gateway->startPort = 57699;
 // 服务注册地址
-$gateway->registerAddress = '127.0.0.1:57697';
+$gateway->registerAddress = '127.0.0.1:57698';
 
 // 心跳间隔
 //$gateway->pingInterval = 10;

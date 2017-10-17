@@ -24,7 +24,7 @@ $worker->name = 'ard_iot1_b';
 // bussinessWorker进程数量
 $worker->count = 1;
 // 服务注册地址
-$worker->registerAddress = '127.0.0.1:57697';
+$worker->registerAddress = '127.0.0.1:57698';
 
 // 如果不是在根目录启动，则运行runAll方法
 if(!defined('GLOBAL_START')) {
