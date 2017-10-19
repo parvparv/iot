@@ -144,7 +144,7 @@ class Events
        // 向所有人发送 
        GateWay::sendToAll("$client_id logout");
 		 
-       Gateway::unbindUid($client_id,$_SESSION['uid'])); 
+       Gateway::unbindUid($client_id,$_SESSION['uid']); 
 		 unset($_SESSION['uid']); 
 	
    }
