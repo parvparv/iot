@@ -20,7 +20,7 @@
 //declare(ticks=1);
 
 use \GatewayWorker\Lib\Gateway;
-
+use Workerman\Lib\Timer;
 /**
  * 主逻辑
  * 主要是处理 onConnect onMessage onClose 三个方法
@@ -68,6 +68,9 @@ class Events
 		   if (isset($_SESSION['uid']) && 
 			$_SESSION['uid']== $msg_json['uid'] ) {
 		   	//已经被认证过了!  或是 发 状态信息 或是 退出  
+ 	  	Gateway::sendToClient($client_id,'have uid!' );
+			
+				 
 				 
 	  		 if($msg_json['type'] == 3){ //心跳   
 		  	  Gateway::sendToClient($client_id,'shoudao xintiao' );
@@ -82,7 +85,11 @@ class Events
  
  
 	  		 }  else if($msg_json['type'] == 2){ //退出
+		  	  	Gateway::sendToClient($client_id,'tuichu' );
+		
 	  				if(jiamisuanfa($msg_json['mi'])){//加密算法 通过 
+				 	  	Gateway::sendToClient($client_id,'tuichu ok' );
+		
 	  		         Gateway::unbindUid($client_id,$msg_json['uid']); 
 	  					unset($_SESSION['uid']); 
 	  					}else{ 
@@ -91,7 +98,11 @@ class Events
 			
 	  					} 
 	  		 }else if($msg_json['type'] != 1){ //认证消息
+		 	  	Gateway::sendToClient($client_id,'renzheng' );
+				 
 							if(jiamisuanfa($msg_json['mi'])){//加密算法 通过
+						 	  	Gateway::sendToClient($client_id,'renzheng ok' );
+							
 							Gateway::bindUid($client_id, $msg_json['uid']);
 							$_SESSION['uid']=$msg_json['uid'] ;
 							Timer::del($_SESSION['auth_timer_id']);
@@ -111,9 +122,15 @@ class Events
 				
 		   }else{
 		   	//没被认证过的,只允许发认证消息
+		 	  	Gateway::sendToClient($client_id,'have no uid' );
 				
 				  if($msg_json['type'] != 1){ //认证消息
+	  		 	  	Gateway::sendToClient($client_id,'no uid renzheng' );
+			
 							if(jiamisuanfa($msg_json['mi'])){//加密算法 通过
+								
+						 	  	Gateway::sendToClient($client_id,'renzheng ok' );
+			
 							Gateway::bindUid($client_id, $msg_json['uid']);
 							$_SESSION['uid']=$msg_json['uid'] ;
 							Timer::del($_SESSION['auth_timer_id']);
@@ -151,8 +168,16 @@ class Events
 	
 	
 	
-	private function jiamisuanfa($miwen){//加密算法计算 
-		//@#%#^$^U&IYU 
+	private function jiamisuanfa($mima){//加密算法计算 
+		
+ 
+		
+		
+		
+		
+		
+		
+		
 		return true;
 	}
 }
