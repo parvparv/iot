@@ -28,26 +28,112 @@ use \GatewayWorker\Lib\Gateway;
  */
 class Events
 {
-    /**
-     * 当客户端连接时触发
-     * 如果业务不需此回调可以删除onConnect
-     * 
-     * @param int $client_id 连接id
-     */
-    public static function onConnect($client_id) {
-        // 向当前client_id发送数据 
-        Gateway::sendToClient($client_id, "Hello $client_id\n");
-        
-    }
-    
+     
+   public static function onConnect($client_id)
+      {
+          // 连接到来后，定时30秒关闭这个链接，需要30秒内发认证并删除定时器阻止关闭连接的执行
+          $_SESSION['auth_timer_id'] = Timer::add(30, function($client_id){
+            
+	  	  	  Gateway::sendToClient($client_id,'not good time, kick out you' );
+			
+				//  Gateway::closeClient($client_id);
+          }, array($client_id), false);
+      }
+		
    /**
     * 当客户端发来消息时触发
     * @param int $client_id 连接id
     * @param mixed $message 具体消息
     */
    public static function onMessage($client_id, $message) {
-        // 向所有人发送 
-        Gateway::sendToAll("$client_id said $message");
+	  // 向所有人发送 Gateway::sendToAll("$client_id said $message");
+	 
+	  Gateway::sendToAll($client_id,$client_id.'sandtoall msg:'.$message);
+		//消息 json 格式
+		// "type" 1 登录  2 登出  3 心跳 4 普通消息 
+		//  "mi"  加密算法密码,文本,
+		//  "msg" 消息内容
+		//  "uid"  用户id 数字类型 100 起步
+		  $msg_json = json_decode($message, true);
+		  
+	     if(json_last_error() != JSON_ERROR_NONE){
+	     	//Gateway::closeCurrentClient();  //非正常数据 ,踢出
+	  	  Gateway::sendToClient($client_id,'not good json, kick out you' );
+			
+			return ;
+		  }
+		  
+		   
+		  //判断当前发信息的人 是否 已经有了 uid 
+		   if (isset($_SESSION['uid']) && 
+			$_SESSION['uid']== $msg_json['uid'] ) {
+		   	//已经被认证过了!  或是 发 状态信息 或是 退出  
+				 
+	  		 if($msg_json['type'] == 3){ //心跳   
+		  	  Gateway::sendToClient($client_id,'shoudao xintiao' );
+	
+	  		 } else if($msg_json['type'] == 4){ //普通消息
+ 
+				 //向某 cid uid 转发某消息!.....! 
+				 //多久未回复,说明 错误............
+				 //发送重要消息前,收费前,发送探寻消息,探寻成功,方可付费
+	  	  	  Gateway::sendToClient($client_id,'putong xiaoxi' );
+			
+ 
+ 
+	  		 }  else if($msg_json['type'] == 2){ //退出
+	  				if(jiamisuanfa($msg_json['mi'])){//加密算法 通过 
+	  		         Gateway::unbindUid($client_id,$msg_json['uid']); 
+	  					unset($_SESSION['uid']); 
+	  					}else{ 
+	  		  			//Gateway::closeClient($client_id);
+		 Gateway::sendToClient($client_id,'not good jiami, kick out you' );
+			
+	  					} 
+	  		 }else if($msg_json['type'] != 1){ //认证消息
+							if(jiamisuanfa($msg_json['mi'])){//加密算法 通过
+							Gateway::bindUid($client_id, $msg_json['uid']);
+							$_SESSION['uid']=$msg_json['uid'] ;
+							Timer::del($_SESSION['auth_timer_id']);
+							
+							}else{ 
+						  	//Gateway::closeClient($client_id);
+		 Gateway::sendToClient($client_id,'not good jiami, kick out you' );
+			
+							} 
+			 }else{ //类型不在册,踢出
+						 	//Gateway::closeClient($client_id);
+       Gateway::sendToClient($client_id,'not good type, kick out you' );
+			
+					} 
+				
+				
+				
+		   }else{
+		   	//没被认证过的,只允许发认证消息
+				
+				  if($msg_json['type'] != 1){ //认证消息
+							if(jiamisuanfa($msg_json['mi'])){//加密算法 通过
+							Gateway::bindUid($client_id, $msg_json['uid']);
+							$_SESSION['uid']=$msg_json['uid'] ;
+							Timer::del($_SESSION['auth_timer_id']);
+							
+							}else{ 
+						  	//Gateway::closeClient($client_id);
+				 	  	  Gateway::sendToClient($client_id,'not good jiami, kick out you' );
+			
+							} 
+					}else{
+						 	//Gateway::closeClient($client_id);
+							
+				 	  	  Gateway::sendToClient($client_id,'not good renzheng and no renzheng, kick out you' );
+			
+					}
+				
+		   }
+		  
+		   
+		  
    }
    
    /**
@@ -57,5 +143,16 @@ class Events
    public static function onClose($client_id) {
        // 向所有人发送 
        GateWay::sendToAll("$client_id logout");
+		 
+       Gateway::unbindUid($client_id,$_SESSION['uid'])); 
+		 unset($_SESSION['uid']); 
+	
    }
+	
+	
+	
+	private function jiamisuanfa($miwen){//加密算法计算 
+		//@#%#^$^U&IYU 
+		return true;
+	}
 }

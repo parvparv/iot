@@ -11,13 +11,17 @@ use GatewayClient\Gateway;
  *注意Register服务端口在start_register.php中可以找到（chat默认是1236）
  *这里假设GatewayClient和Register服务都在一台服务器上，ip填写127.0.0.1
  **/
-//Gateway::$registerAddress = '127.0.0.1:1236';
+ Gateway::$registerAddress = '127.0.0.1:57698';
 
 
 // 以下是调用示例，接口与GatewayWorker环境的接口一致
 // 注意除了不支持sendToCurrentClient和closeCurrentClient方法
 // 其它方法都支持
 Gateway::sendToAll('cscscccccsssss999'."\n");
+ 
+$client = Gateway::getClientIdByUid(101);
+
+Gateway::sendToClient($client[0], 'sendtoclient!'."\n");
 
 /*
 Gateway::sendToClient($client_id, $data);
