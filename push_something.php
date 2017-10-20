@@ -17,11 +17,23 @@ use GatewayClient\Gateway;
 // 以下是调用示例，接口与GatewayWorker环境的接口一致
 // 注意除了不支持sendToCurrentClient和closeCurrentClient方法
 // 其它方法都支持
-Gateway::sendToAll('cscscccccsssss999'."\n");
- 
-$client = Gateway::getClientIdByUid(101);
 
-Gateway::sendToClient($client[0], 'sendtoclient!'."\n");
+$uid=  $_GET['uid'];
+$msg=  $_GET['msg'];
+ 
+ 
+ if(Gateway::isUidOnline($uid)){
+ 	
+	 $client = Gateway::getClientIdByUid($uid); 
+	 Gateway::sendToClient($client[0],$msg."\n");
+	 
+ }else{
+ 	
+	 echo $uid.'不在线';
+	
+ }
+ 
+
 
 /*
 Gateway::sendToClient($client_id, $data);

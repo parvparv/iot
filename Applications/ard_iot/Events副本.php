@@ -20,7 +20,7 @@
 //declare(ticks=1);
 
 use \GatewayWorker\Lib\Gateway;
-//use Workerman\Lib\Timer;
+use Workerman\Lib\Timer;
 /**
  * 主逻辑
  * 主要是处理 onConnect onMessage onClose 三个方法
@@ -29,15 +29,47 @@ use \GatewayWorker\Lib\Gateway;
 class Events
 {
   private static function jiamisuanfa($mi,$uid){//加密算法计算 
-		  
+		//
+			Gateway::sendToCurrentClient('jiami:'.$mi.'_'.$uid);
+		if(!$mi){
+			Gateway::sendToCurrentClient('null mi');
+		}
+		if(!$uid){
+			Gateway::sendToCurrentClient('null uid');
+		}
+ 
+		
+		for($i=0;$i<8;$i++){
+			if(!isset($mi{$i})){
+				Gateway::sendToCurrentClient('no mi'.$i);
+			} 
+		}
+		
+		for($i=0;$i<8;$i++){
+			if(!isset($uid{$i})){
+				Gateway::sendToCurrentClient('no uid'.$i);
+			} 
+		}
+		
+		 
 	 	if(!$mi || !isset($mi{5})) return false;
 	 	if(!$uid ||   ( $uid<100 && !isset($uid{2} ) )  ) return false;
-		  
+		 
+		Gateway::sendToCurrentClient('chenggong mima');
 		return true;
 	}
 	  
 	  
- 
+   public static function onConnect($client_id)
+      {
+          // 连接到来后，定时30秒关闭这个链接，需要30秒内发认证并删除定时器阻止关闭连接的执行
+          $_SESSION['auth_timer_id'] = Timer::add(30, function($client_id){
+            
+	  	  	  Gateway::sendToClient($client_id,'not good time, kick out you' );
+			
+				//  Gateway::closeClient($client_id);
+          }, array($client_id), false);
+      }
 		
    /**
     * 当客户端发来消息时触发
@@ -63,16 +95,13 @@ class Events
   	     	//Gateway::closeCurrentClient();  //非正常数据 ,踢出 
   	  	  Gateway::sendToClient($client_id,'not good json, kick out you' );
   			return ;
-		  }else if(!isset($msg_json['uid']) ){
-  	     	//Gateway::closeCurrentClient();  //非正常数据 ,踢出 
-  	  	  Gateway::sendToClient($client_id,'not good json, kick out you' );
-  			return ;
 		  }
 		  
 		   
 		  //判断当前发信息的人 是否 已经有了 uid 
 		  
-	   
+		$getc_by_uid =  Gateway::getClientIdByUid($_SESSION['uid']);
+  Gateway::sendToClient($client_id,'uid:'.$_SESSION['uid'].'_'. $getc_by_uid[0]);		  
 		   if (
 			isset($_SESSION['uid']) && 
 			$_SESSION['uid']== $msg_json['uid'] 			
@@ -90,7 +119,7 @@ class Events
 	  		 }else if($msg_json['type'] == 5){ // uid 在线询问
 				 //{"type":5,"mima":"7c93Def","touid":101}
 				 //询问某uid是否在线
- 				$msg_json['mi']
+ 
 				 
 				 
 	  	 Gateway::sendToClient($client_id,'putong xiaoxi:'.$msg_json['msg'] );
@@ -114,7 +143,7 @@ class Events
 	  		 }  else if($msg_json['type'] == 2){ //退出
 		  	  	Gateway::sendToClient($client_id,'tuichu' );
 		
- if(isset($msg_json['mi'])   && self::jiamisuanfa($msg_json['mi'],$msg_json['uid'])){//加密算法 通过 
+ if(isset($msg_json['mi']) &&  isset($msg_json['uid']) && self::jiamisuanfa($msg_json['mi'],$msg_json['uid'])){//加密算法 通过 
 				 	  	Gateway::sendToClient($client_id,'tuichu ok' );
 		
 	    Gateway::sendToClient($client_id,'good jiami, log out you' );
@@ -145,17 +174,29 @@ class Events
   	  		 	  	Gateway::sendToClient($client_id,'no uid renzheng' );
 			
 			
-		 if(isset($msg_json['mi']) &&    self::jiamisuanfa($msg_json['mi'],$msg_json['uid'])){//加密算法 通过 
+		 if(isset($msg_json['mi']) &&  isset($msg_json['uid']) && self::jiamisuanfa($msg_json['mi'],$msg_json['uid'])){//加密算法 通过 
 				
 								
   						 Gateway::sendToClient($client_id,'renzheng ok' );
 			
   							Gateway::bindUid($client_id, $msg_json['uid']);
   							$_SESSION['uid']=$msg_json['uid'] ;
-  					 		 
+  							Timer::del($_SESSION['auth_timer_id']);
+							
+							
+			$arr=Gateway::getClientIdByUid($msg_json['uid']);
+			$arrsize=count($arr) ;	
+			for($i=0;$i<$arrsize;$i++){
+				$sendt.=$arr($i);
+			}
+						
+		  	  Gateway::sendToClient($client_id,'uid have:'.$sendt );
+			
+							
+							
   							}else{ 
   						  	//Gateway::closeClient($client_id);
-  		  Gateway::sendToClient($client_id,'not good jiami, kick out you' );
+  				 	  	  Gateway::sendToClient($client_id,'not good jiami, kick out you' );
   							} 
 					
 					
